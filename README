@@ -1,0 +1,3 @@
+PHP script to crawl specific domain websites or several domains recursively for user specified data
+
+Currently crawls for e-mail addresses on one chosen domain only.
