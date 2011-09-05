@@ -6,8 +6,15 @@ class Crawler {
 	private $db_url = 'db/db.sqlite';
 
 	public function __construct() {
-		
+	
 		$this->db = new Sqlite3($this->db_url);
+		
+		$create_str = 'CREATE TABLE IF NOT EXISTS crawl_data (
+							domain varchar(80), 
+							email varchar(80)
+						)';
+		
+		$this->db->exec($create_str);
 		
 	}
 	
@@ -18,17 +25,27 @@ class Crawler {
 			$content	= stream_get_contents($handle);
 			$parsed		= parse_url($url);
 			$links		= $this->getLinks($content);
-			$emails		= $this->getEmailAddresses($content);	
+			$emails		= $this->getEmailAddresses($content);
 			
-			echo $parsed['host'];
+			$insert_str = 'INSERT INTO crawl_data (domain, email)
+							VALUES (:domain, :email)';
 			
-			//print_r($links);
-			print_r($emails);
+			$stmt = $this->db->prepare($insert_str);
+			
+			foreach ($emails as $email) {
+			
+				$stmt->bindValue(':domain', $parsed['host'], SQLITE3_TEXT);
+				$stmt->bindValue(':email', $email, SQLITE3_TEXT); 
+				$result = $stmt->execute();
+			
+			}
+			
+			$stmt->close();
 
 			fclose($handle);
-		
+
 		}
-	
+
 	}
 	
 	public function getLinks($dom) {
@@ -71,6 +88,18 @@ class Crawler {
 		// Return only full pattern matches, not subpatterns etc.
 		// Strip out duplicate addresses.
 		return array_unique($emails[0]);
+	
+	}
+	
+	public function print_db() {
+		
+		
+		
+	}
+	
+	public function close() {
+
+		$this->db->close();
 	
 	}
 

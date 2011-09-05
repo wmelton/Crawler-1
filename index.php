@@ -12,9 +12,11 @@
 require_once('crawler.php');
 
 $crawler = new Crawler();
+$crawler->crawl('http://www.dn.se');
+$crawler->crawl('http://www.aftonbladet.se');
 $crawler->crawl('http://www.sydsvenskan.se');
-
-//$crawler->getColumn('email');
+$crawler->print_db();
+$crawler->close();
 
 ?>
 
