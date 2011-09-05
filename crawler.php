@@ -4,6 +4,11 @@ class Crawler {
 
 	private $db;
 	private $db_url = 'db/db.sqlite';
+	// The depth variable defines how far the crawler should traverse
+	// -1 = infinite, 0 = single page, 1 = single domain, >1 = number of domains
+	private $depth = 1;
+	// Keep track of pages crawled to avoid crawling them again
+	private static $crawled = array();
 
 	public function __construct() {
 	
@@ -23,28 +28,47 @@ class Crawler {
 		if ($handle	= fopen($url, 'r')) {
 		
 			$content	= stream_get_contents($handle);
+			$mimetype	= $this->getMimeType($content);
+			
+			if ($mimetype != 'text/html') return;
+
 			$parsed		= parse_url($url);
+			$domain		= $parsed['host'];
 			$links		= $this->getLinks($content);
 			$emails		= $this->getEmailAddresses($content);
 			
-			$insert_str = 'INSERT OR IGNORE INTO crawl_data (domain, email)
-						   VALUES (:domain, :email)';
+			// TODO: Add other things to search for and store
+			$this->storeEmailAddresses($emails, $domain);
 			
-			// At the moment, only crawl for e-mail addresses
-			// To be moved into separate functions later
-			$stmt = $this->db->prepare($insert_str);
+			fclose($handle);
+			// Add page to list of previously crawled pages
+			self::$crawled[] = $url;
+			//print_r(self::$crawled);
+			//echo '<br />';
 			
-			foreach ($emails as $email) {
+			// $depth == 1, entire domain is to be searched
+			if ($this->depth == 1) {
 			
-				$stmt->bindValue(':domain', $parsed['host'], SQLITE3_TEXT);
-				$stmt->bindValue(':email', $email, SQLITE3_TEXT); 
-				$result = $stmt->execute();
+				foreach($links as $link) {
+					// Check to see if page belongs to same domain
+					$parsed_link = parse_url($link);
+					if ($parsed_link['host'] == $domain) {
+						//Check to see if page has been crawled before
+						if (!in_array($link, self::$crawled)) {
+							// Make sure 
+							if (($link != $url) && ($link != ($url . '/'))) {
+								#$this->crawl($link);
+								echo "link " . $link . '<br />';
+							
+							}
+						
+						}
+					
+					}
+				
+				}
 			
 			}
-			
-			$stmt->close();
-
-			fclose($handle);
 
 		}
 
@@ -65,7 +89,7 @@ class Crawler {
 	
 	}
 	
-	public function getLinks($dom) {
+	private function getLinks($dom) {
 	
 		$domdoc = new DOMDocument();
 		// Ignore warnings of malformed html
@@ -93,14 +117,15 @@ class Crawler {
 	
 	}
 	
-	public function getEmailAddresses($dom) {
+	private function getEmailAddresses($dom) {
 		
 		// Pretty basic function to scrape e-mail addresses from text
 		// and return them in an array.
 		$emails = array();
 		
 		// Search for a regular e-mail pattern, i.e. 'example@example.org'
-		preg_match_all('/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b/i', $dom, $emails);
+		preg_match_all('/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b/i', 
+						$dom, $emails);
 		
 		// Return only full pattern matches, not subpatterns etc.
 		// Strip out duplicate addresses.
@@ -108,10 +133,49 @@ class Crawler {
 	
 	}
 	
+	private function storeEmailAddresses($emails, $domain) {
+	
+		$insert_str = 'INSERT OR IGNORE INTO crawl_data (domain, email)
+						   VALUES (:domain, :email)';
+			
+		// At the moment, only crawl for e-mail addresses
+		// To be moved into separate functions later
+		$stmt = $this->db->prepare($insert_str);
+			
+		foreach ($emails as $email) {
+			
+			$stmt->bindValue(':domain', $domain, SQLITE3_TEXT);
+			$stmt->bindValue(':email', $email, SQLITE3_TEXT); 
+			$result = $stmt->execute();
+			
+		}
+			
+		$stmt->close();
+	
+	}
+	
+	private function getMimeType($str) {
+	
+		$fileinfo = new finfo(FILEINFO_MIME_TYPE);
+		
+		return $fileinfo->buffer($str);
+	
+	}
+	
+	public function setDepth($depth) {
+	
+		$this->depth = $depth;
+	
+	}
+	
+	public function close() {
+
+		$this->db->close();
+	
+	}
 	
 	// Temporary dummy function to output the database
-	
-	public function print_db() {
+	private function print_db() {
 		
 		$result	= $this->db->query('SELECT * FROM crawl_data ORDER BY domain');
 		
@@ -124,15 +188,9 @@ class Crawler {
 			echo '</tr>';
 			
 		}
-		
+
 		echo '</table>';
 		
-	}
-	
-	public function close() {
-
-		$this->db->close();
-	
 	}
 
 }
