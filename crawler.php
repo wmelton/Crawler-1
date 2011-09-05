@@ -10,8 +10,8 @@ class Crawler {
 		$this->db = new Sqlite3($this->db_url);
 		
 		$create_str = 'CREATE TABLE IF NOT EXISTS crawl_data (
-							domain varchar(80), 
-							email varchar(80)
+							domain	VARCHAR(80), 
+							email	VARCHAR(80) UNIQUE
 						)';
 		
 		$this->db->exec($create_str);
@@ -27,9 +27,11 @@ class Crawler {
 			$links		= $this->getLinks($content);
 			$emails		= $this->getEmailAddresses($content);
 			
-			$insert_str = 'INSERT INTO crawl_data (domain, email)
-							VALUES (:domain, :email)';
+			$insert_str = 'INSERT OR IGNORE INTO crawl_data (domain, email)
+						   VALUES (:domain, :email)';
 			
+			// At the moment, only crawl for e-mail addresses
+			// To be moved into separate functions later
 			$stmt = $this->db->prepare($insert_str);
 			
 			foreach ($emails as $email) {
@@ -46,6 +48,21 @@ class Crawler {
 
 		}
 
+	}
+	
+	// Allows crawling of multiple urls ("seeds") passed as a string array
+	public function crawlSeeds($seeds) {
+	
+		if (is_array($seeds)) {
+
+			foreach ($seeds as $seed) {
+			
+				if (is_string($seed)) $this->crawl($seed);
+			
+			}
+
+		}
+	
 	}
 	
 	public function getLinks($dom) {
@@ -91,9 +108,24 @@ class Crawler {
 	
 	}
 	
+	
+	// Temporary dummy function to output the database
+	
 	public function print_db() {
 		
+		$result	= $this->db->query('SELECT * FROM crawl_data ORDER BY domain');
 		
+		echo '<table>';
+		
+		while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+			
+			echo '<tr>';
+			echo '<td>'.$row['domain'].'</td><td>'.$row['email'].'</td>';
+			echo '</tr>';
+			
+		}
+		
+		echo '</table>';
 		
 	}
 	

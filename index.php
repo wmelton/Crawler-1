@@ -11,10 +11,13 @@
 
 require_once('crawler.php');
 
+$seeds = array(	'http://www.dn.se', 'http://www.aftonbladet.se',
+				'http://www.sydsvenskan.se', 'http://www.svd.se',
+				'http://www.pitchfork.com', 'http://www.expressen.se',
+				'http://www.na.se');
+
 $crawler = new Crawler();
-$crawler->crawl('http://www.dn.se');
-$crawler->crawl('http://www.aftonbladet.se');
-$crawler->crawl('http://www.sydsvenskan.se');
+$crawler->crawlSeeds($seeds);
 $crawler->print_db();
 $crawler->close();
 
