@@ -6,7 +6,7 @@ class Crawler {
 	private $db_url = 'db/db.sqlite';
 	// The depth variable defines how far the crawler should traverse
 	// -1 = infinite, 0 = single page, 1 = single domain, >1 = number of domains
-	private $depth = 1;
+	private $depth = 0;
 	// Keep track of pages crawled to avoid crawling them again
 	private static $crawled = array();
 
@@ -14,6 +14,7 @@ class Crawler {
 	
 		$this->db = new Sqlite3($this->db_url);
 		
+		// Store only unique e-mail addresses
 		$create_str = 'CREATE TABLE IF NOT EXISTS crawl_data (
 							domain	VARCHAR(80), 
 							email	VARCHAR(80) UNIQUE
@@ -30,15 +31,19 @@ class Crawler {
 			$content	= stream_get_contents($handle);
 			$mimetype	= $this->getMimeType($content);
 			
-			if ($mimetype != 'text/html') return;
+			// For now, only crawl text/html files
+			if ($mimetype == 'text/html') {
 
-			$parsed		= parse_url($url);
-			$domain		= $parsed['host'];
-			$links		= $this->getLinks($content);
-			$emails		= $this->getEmailAddresses($content);
+				$host		= $this->getHost($url);
+				$links		= $this->getLinks($content);
+				$emails		= $this->getEmailAddresses($content);
 			
-			// TODO: Add other things to search for and store
-			$this->storeEmailAddresses($emails, $domain);
+			} else {
+				
+				fclose($handle);
+				return;
+			
+			}
 			
 			fclose($handle);
 			// Add page to list of previously crawled pages
@@ -46,32 +51,42 @@ class Crawler {
 			//print_r(self::$crawled);
 			//echo '<br />';
 			
-			// $depth == 1, entire domain is to be searched
-			if ($this->depth == 1) {
+			// $depth == 0, only given url is to be searched
+			if ($this->depth == 0) {
 			
-				foreach($links as $link) {
-					// Check to see if page belongs to same domain
-					$parsed_link = parse_url($link);
-					if ($parsed_link['host'] == $domain) {
-						//Check to see if page has been crawled before
-						if (!in_array($link, self::$crawled)) {
-							// Make sure 
-							if (($link != $url) && ($link != ($url . '/'))) {
-								#$this->crawl($link);
-								echo "link " . $link . '<br />';
-							
-							}
-						
-						}
-					
-					}
-				
-				}
+				$this->storeEmailAddresses($emails, $host);
 			
 			}
-
+			
+			// $depth == 1, entire domain is to be searched
+			if ($this->depth == 1) {
+				
+				// Save any e-mail address on current page
+				// Then proceed to traverse further
+				$this->storeEmailAddresses($emails, $host);
+				
+				foreach($links as $link) {
+					// Check to see if page belongs to same domain
+					$p_link = parse_url($link);
+					// isset to avoid 'undefined index' notice
+					if (isset($p_link['host'])) {
+						
+						if ($p_link['host'] == $host) {
+							//Check to see if page has been crawled before
+							if (!in_array($link, self::$crawled)) {
+								// Make sure link doesn't point to self
+								if (($link != $url) && 
+									($link != ($url . '/'))) {
+								
+									$this->crawl($link);
+							
+								}
+							}
+						}
+					}
+				}
+			}
 		}
-
 	}
 	
 	// Allows crawling of multiple urls ("seeds") passed as a string array
@@ -84,9 +99,7 @@ class Crawler {
 				if (is_string($seed)) $this->crawl($seed);
 			
 			}
-
 		}
-	
 	}
 	
 	private function getLinks($dom) {
@@ -109,8 +122,8 @@ class Crawler {
 			
 				$hrefs[] = $attributes->getNamedItem('href')->nodeValue;
 			
-			}
-			
+			}	
+		
 		}
 		
 		return $hrefs;
@@ -137,9 +150,7 @@ class Crawler {
 	
 		$insert_str = 'INSERT OR IGNORE INTO crawl_data (domain, email)
 						   VALUES (:domain, :email)';
-			
-		// At the moment, only crawl for e-mail addresses
-		// To be moved into separate functions later
+
 		$stmt = $this->db->prepare($insert_str);
 			
 		foreach ($emails as $email) {
@@ -162,6 +173,14 @@ class Crawler {
 	
 	}
 	
+	private function getHost($url) {
+	
+		$parsed		= parse_url($url);
+		
+		return $parsed['host'];
+	
+	}
+	
 	public function setDepth($depth) {
 	
 		$this->depth = $depth;
@@ -175,11 +194,12 @@ class Crawler {
 	}
 	
 	// Temporary dummy function to output the database
-	private function print_db() {
+	public function print_db() {
 		
 		$result	= $this->db->query('SELECT * FROM crawl_data ORDER BY domain');
 		
 		echo '<table>';
+		echo '<tr><td>Domain</td><td>E-mail</td></tr>';
 		
 		while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
 			
