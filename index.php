@@ -11,10 +11,12 @@
 
 require_once('crawler.php');
 
-/*$seeds = array(	'http://www.dn.se', 'http://www.aftonbladet.se',
+/*
+$seeds = array(	'http://www.dn.se', 'http://www.aftonbladet.se',
 				'http://www.sydsvenskan.se', 'http://www.svd.se',
 				'http://www.pitchfork.com', 'http://www.expressen.se',
-				'http://www.na.se');*/
+				'http://www.na.se');
+*/
 
 $seeds = array('http://www.lonewolfmedia.se');
 
