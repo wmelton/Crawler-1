@@ -12,6 +12,9 @@
 require_once('crawler.php');
 
 /*
+
+For later tests with "huge" sites
+
 $seeds = array(	'http://www.dn.se', 'http://www.aftonbladet.se',
 				'http://www.sydsvenskan.se', 'http://www.svd.se',
 				'http://www.pitchfork.com', 'http://www.expressen.se',
