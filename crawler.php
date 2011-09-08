@@ -6,9 +6,12 @@ class Crawler {
 	private $db_url = 'db/db.sqlite';
 	// The depth variable defines how far the crawler should traverse
 	// -1 = infinite, 0 = single page, 1 = single domain, >1 = number of domains
-	private $depth = 0;
+	private $depth = 1;
 	// Keep track of pages crawled to avoid crawling them again
 	private static $crawled = array();
+	private $count = 0;
+	// Broadcast each site crawled to client
+	private $broadcast = true;
 
 	public function __construct() {
 	
@@ -27,6 +30,10 @@ class Crawler {
 	public function crawl($url) {
 	
 		if ($handle	= fopen($url, 'r')) {
+
+			// Add page to list of previously crawled pages
+			self::$crawled[] = $url;
+			error_log(count(self::$crawled) + "\n", 3, 'tmp.log');
 		
 			$content	= stream_get_contents($handle);
 			$mimetype	= $this->getMimeType($content);
@@ -44,13 +51,17 @@ class Crawler {
 				return;
 			
 			}
+
+			if ($this->broadcast) {
 			
+				echo 	'Crawling.. ' . $url . 
+						' Links.. ' . count($links) .  
+						' Crawled ' . count(self::$crawled) . '<br />';
+						
+			}
+						
 			fclose($handle);
-			// Add page to list of previously crawled pages
-			self::$crawled[] = $url;
-			//print_r(self::$crawled);
-			//echo '<br />';
-			
+
 			// $depth == 0, only given url is to be searched
 			if ($this->depth == 0) {
 			
@@ -100,6 +111,12 @@ class Crawler {
 			
 			}
 		}
+	}
+	
+	public function getStatus() {
+	
+		return $this->count;
+	
 	}
 	
 	private function getLinks($dom) {
@@ -193,24 +210,26 @@ class Crawler {
 	
 	}
 	
-	// Temporary dummy function to output the database
+	// Temporary dummy function to output the database in an html table
 	public function print_db() {
 		
 		$result	= $this->db->query('SELECT * FROM crawl_data ORDER BY domain');
+		$output = '';
 		
-		echo '<table>';
-		echo '<tr><td>Domain</td><td>E-mail</td></tr>';
+		$output .= '<table>';
+		$output .= '<tr><td>Domain</td><td>E-mail</td></tr>';
 		
 		while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
 			
-			echo '<tr>';
-			echo '<td>'.$row['domain'].'</td><td>'.$row['email'].'</td>';
-			echo '</tr>';
+			$output .= '<tr>';
+			$output .= '<td>'.$row['domain'].'</td><td>'.$row['email'].'</td>';
+			$output .= '</tr>';
 			
 		}
 
-		echo '</table>';
+		$output .= '</table>';
 		
+		return $output;
 	}
 
 }

@@ -1,3 +1,9 @@
 PHP script to crawl a specific website, domain or several domains recursively for user specified data.
 
 Currently crawls for e-mail addresses only, but more content types will be added later on.
+
+TODO:
+=====
+* Respect robots.txt file
+* Create a basic frontend for setting crawl location and behavior
+* Use frontend to "live broadcast" what's being crawled
