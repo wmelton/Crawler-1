@@ -2,15 +2,18 @@
 
 require_once('crawler.php');
 
-if (isset($_POST['request'])) {
+// TODO: This needs to be saved in a session var
+$crawler;
 
-	$crawler = new Crawler();
+if (isset($_POST['request'])) {
 	
 	$request = json_decode($_POST['request']);
 	
 	// Start crawling if not doing so already
 	if ($request->type == 'crawl') {
 		
+		$crawler = new Crawler();
+	
 		//echo 'Started crawling ' . $request->value;
 		
 		$crawler->setDepth(1);
