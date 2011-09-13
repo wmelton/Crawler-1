@@ -29,17 +29,18 @@ $seeds = array('http://www.lonewolfmedia.se');
 
 <div id="message_bar">
 
-	<h2 id="status">Message</h1>
+	<h3 id="status">Message</h3>
 
 </div>
 
-<h2 id="tmp">status</h2>
+<h3 id="tmp">status</h3>
 
 <div id="bottom_bar">
 	<div id="bottom_content">
 
 		<input id="input_crawl" type="text" value="http://www.lonewolfmedia.se" />
 		<button id="button_crawl" onclick="crawlStart()">Crawl</button>
+		<button id="button_stop" onclick="crawlStop()">Stop</button>
 
 	</div>
 </div>

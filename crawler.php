@@ -7,9 +7,9 @@ class Crawler {
 	// The depth variable defines how far the crawler should traverse
 	// -1 = infinite, 0 = single page, 1 = single domain, >1 = number of domains
 	private $depth = 1;
+	private $stop = false;
 	// Keep track of pages crawled to avoid crawling them again
 	private $crawled = array();
-	private $count = 0;
 	// Broadcast each site crawled to client
 	private $broadcast = true;
 
@@ -29,10 +29,19 @@ class Crawler {
 
 	public function crawl($url) {
 
+		if ($this->stop) {
+
+			error_log('STOP!!');
+			return;
+
+		}
+
+		error_log('crawling ' . $url);
+
 		if ($handle	= fopen($url, 'r')) {
 
 			// Add page to list of previously crawled pages
-			$crawled[] = $url;
+			$this->crawled[] = $url;
 
 			$content	= stream_get_contents($handle);
 			$mimetype	= $this->getMimeType($content);
@@ -53,9 +62,9 @@ class Crawler {
 
 			if ($this->broadcast) {
 
-				echo 	'Crawling.. ' . $url . 
-						' Links.. ' . count($links) .  
-						' Crawled ' . count($this->crawled) . '<br />';
+				echo 'Crawling.. ' . $url . 
+					' Links.. ' . count($links) .  
+					' Crawled ' . count($this->crawled) . '<br />';
 
 			}
 
@@ -83,7 +92,7 @@ class Crawler {
 
 						if ($p_link['host'] == $host) {
 							//Check to see if page has been crawled before
-							if (!in_array($link, $this->$crawled)) {
+							if (!in_array($link, $this->crawled)) {
 								// Make sure link doesn't point to self
 								if (($link != $url) && 
 									($link != ($url . '/'))) {
@@ -200,6 +209,12 @@ class Crawler {
 	public function setDepth($depth) {
 
 		$this->depth = $depth;
+
+	}
+
+	public function stop() {
+
+		$this->stop = true;
 
 	}
 

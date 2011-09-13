@@ -11,7 +11,7 @@
 	margin: 200px 0 0 0;
 }
 
-#status {
+#status, #tmp {
 	text-align: center;
 }
 
@@ -30,9 +30,9 @@
 }
 
 #input_crawl {
-	width: 340px;
+	width: 300px;
 }
 
-#button_crawl {
-	
+button {
+	padding: 0 3px 0 3px;
 }

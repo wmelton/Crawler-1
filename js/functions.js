@@ -6,6 +6,8 @@ function crawlStart() {
 
 	if (!crawling) {
 
+		crawling = true;
+
 		var url	= document.getElementById('input_crawl').value;
 		var obj	= { 
 			"type": "crawl",
@@ -13,17 +15,36 @@ function crawlStart() {
 		};
 
 		var json		= JSON.stringify(obj);
-		var crawling	= true;
 		var ajaxCrawl	= new ajaxObject('backend.php', handleResponse);
 
 		ajaxCrawl.doPost('request=' + json);
-
 		// Send a status request message each second
 		timer = setInterval(getStatus, 1000);
 
 	}
 
-	else return;
+	else {
+
+		updateStatus('Already crawling!');
+		return;
+
+	}
+
+}
+
+function crawlStop() {
+
+	var obj	= { 
+		"type": "status",
+		"value": "stop"
+	};
+
+	var json		= JSON.stringify(obj);
+	var ajaxCrawl	= new ajaxObject('backend.php', handleResponse);
+
+	ajaxCrawl.doPost('request=' + json);
+	clearInterval(timer);
+	crawling = false;
 
 }
 
@@ -47,13 +68,13 @@ function getStatus() {
 function handleResponse(resptxt) {
 
 	document.getElementById('status').innerHTML = resptxt;
-	
+
 }
 
 function updateStatus(resptxt) {
 
 	document.getElementById('tmp').innerHTML = resptxt;
-	
+
 }
 
 // Create concurrent ajax objects

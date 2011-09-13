@@ -13,24 +13,35 @@ if (isset($_POST['request']) && isset($_SESSION)) {
 
 	$request = json_decode($_POST['request']);
 
+	error_log($request->type);
+
 	// Start crawling if not doing so already
 	if ($request->type == 'crawl') {
 
-		echo 'Started crawling ' . $request->value;
-		$_SESSION['crawler']->setDepth(0);
+		echo 'Started crawling ' . $request->value . '<br />';
+		$_SESSION['crawler']->setDepth(1);
 		$_SESSION['crawler']->crawl($request->value);
 		//$crawler->close();
 		//echo $crawler->print_db();
 
 	}
 
-	else if ($request->type == 'status') {
+	else if (($request->type == 'status')) {
 
-		if ($_SESSION['crawler']) {
+		if ($request->value == 'check') {
 
 			echo $_SESSION['crawler']->getStatus();
 
-		} else echo "Not crawling";
+		} else if ($request->value == 'stop') {
+
+			$_SESSION['crawler']->stop();
+			echo 'Crawler stopped!';
+
+		} else {
+
+			echo "Not crawling";
+
+		}
 
 	}
 
