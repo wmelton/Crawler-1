@@ -37,10 +37,10 @@ $seeds = array('http://www.lonewolfmedia.se');
 
 <div id="bottom_bar">
 	<div id="bottom_content">
-				
+
 		<input id="input_crawl" type="text" value="http://www.lonewolfmedia.se" />
 		<button id="button_crawl" onclick="crawlStart()">Crawl</button>
-	
+
 	</div>
 </div>
 

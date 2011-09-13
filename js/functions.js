@@ -2,7 +2,6 @@ var crawling = false;
 var timer;
 
 // Get data from input text, create a json object, pass it to our ajax request
-
 function crawlStart() {
 
 	if (!crawling) {
@@ -12,23 +11,25 @@ function crawlStart() {
 			"type": "crawl",
 			"value": url
 		};
-		
+
 		var json		= JSON.stringify(obj);
 		var crawling	= true;
 		var ajaxCrawl	= new ajaxObject('backend.php', handleResponse);
-		
+
 		ajaxCrawl.doPost('request=' + json);
-		
+
+		// Send a status request message each second
 		timer = setInterval(getStatus, 1000);
-	
+
 	}
-	
+
 	else return;
-	
+
 }
 
+// Queries the crawler for a status message
 function getStatus() {
-	
+
 	var obj	= { 
 		"type": "status",
 		"value": "check"
@@ -36,7 +37,7 @@ function getStatus() {
 
 	var json		= JSON.stringify(obj);
 	var statCrawl	= new ajaxObject('backend.php', updateStatus);
-	
+
 	statCrawl.doPost('request=' + json);
 
 }
@@ -63,44 +64,44 @@ function ajaxObject(url, callback) {
 	req.onreadystatechange = processRequest;
 
 	function createRequest() {
-	
+
 		if (window.XMLHttpRequest) 	{
-		
+
 			return new XMLHttpRequest();
-		
-		
-		} else {	
-			
+
+
+		} else {
+
 			return new ActiveXObject("Microsoft.XMLHTTP");
 
 		}
-	
+
 	}
-	
+
 	function processRequest() {
 
 		if (req.readyState == 4 && req.status == 200) {
-		
+
 			if (callback) callback(req.responseText);
-			
-		}		
-		
-		
+
+		}
+
+
 	}
-	
+
 	this.doGet = function() {
-	
+
 		req.open('GET', url, true);
 		req.send();
-	
+
 	}
-	
+
 	this.doPost = function(body) {
-	
+
 		req.open('POST', url, true);
 		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 		req.send(body);
-	
+
 	}
-	
+
 }

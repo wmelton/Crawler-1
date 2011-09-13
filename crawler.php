@@ -8,7 +8,7 @@ class Crawler {
 	// -1 = infinite, 0 = single page, 1 = single domain, >1 = number of domains
 	private $depth = 1;
 	// Keep track of pages crawled to avoid crawling them again
-	private static $crawled = array();
+	private $crawled = array();
 	private $count = 0;
 	// Broadcast each site crawled to client
 	private $broadcast = true;
@@ -32,7 +32,7 @@ class Crawler {
 		if ($handle	= fopen($url, 'r')) {
 
 			// Add page to list of previously crawled pages
-			self::$crawled[] = $url;
+			$crawled[] = $url;
 
 			$content	= stream_get_contents($handle);
 			$mimetype	= $this->getMimeType($content);
@@ -55,7 +55,7 @@ class Crawler {
 
 				echo 	'Crawling.. ' . $url . 
 						' Links.. ' . count($links) .  
-						' Crawled ' . count(self::$crawled) . '<br />';
+						' Crawled ' . count($this->crawled) . '<br />';
 
 			}
 
@@ -83,7 +83,7 @@ class Crawler {
 
 						if ($p_link['host'] == $host) {
 							//Check to see if page has been crawled before
-							if (!in_array($link, self::$crawled)) {
+							if (!in_array($link, $this->$crawled)) {
 								// Make sure link doesn't point to self
 								if (($link != $url) && 
 									($link != ($url . '/'))) {
@@ -114,7 +114,7 @@ class Crawler {
 
 	public function getStatus() {
 
-		return $this->count;
+		return count($this->crawled);
 
 	}
 
