@@ -4,6 +4,10 @@ Currently crawls for e-mail addresses only, but more content types will be added
 
 TODO:
 =====
-* Respect robots.txt file
+
+Begun:
 * Create a basic frontend for setting crawl location and behavior
 * Use frontend to "live broadcast" what's being crawled
+
+Later:
+* Respect robots.txt files
