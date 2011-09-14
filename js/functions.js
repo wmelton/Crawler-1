@@ -57,7 +57,7 @@ function getStatus() {
 	};
 
 	var json		= JSON.stringify(obj);
-	var statCrawl	= new ajaxObject('backend.php', updateStatus);
+	var statCrawl	= new ajaxObject('test.php', updateStatus);
 
 	statCrawl.doPost('request=' + json);
 

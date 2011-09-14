@@ -7,11 +7,10 @@ class Crawler {
 	// The depth variable defines how far the crawler should traverse
 	// -1 = infinite, 0 = single page, 1 = single domain, >1 = number of domains
 	private $depth = 1;
-	private $stop = false;
 	// Keep track of pages crawled to avoid crawling them again
 	private $crawled = array();
-	// Broadcast each site crawled to client
-	private $broadcast = true;
+	// Record each site crawled to client
+	private $record = true;
 
 	public function __construct() {
 
@@ -24,19 +23,17 @@ class Crawler {
 						)';
 
 		$this->db->exec($create_str);
+		// Create table to save record of each crawled site
+		$create_str = 'CREATE TABLE IF NOT EXISTS crawl_history (
+							url			VARCHAR(2000) UNIQUE,
+							accessed	DATE
+						)';
+
+		$this->db->exec($create_str);
 
 	}
 
 	public function crawl($url) {
-
-		if ($this->stop) {
-
-			error_log('STOP!!');
-			return;
-
-		}
-
-		error_log('crawling ' . $url);
 
 		if ($handle	= fopen($url, 'r')) {
 
@@ -60,16 +57,9 @@ class Crawler {
 
 			}
 
-			if ($this->broadcast) {
-
-				echo 'Crawling.. ' . $url . 
-					' Links.. ' . count($links) .  
-					' Crawled ' . count($this->crawled) . '<br />';
-
-			}
-
 			fclose($handle);
-
+			// Save record to database
+			if ($this->record) $this->recordURL($url);
 			// $depth == 0, only given url is to be searched
 			if ($this->depth == 0) {
 
@@ -186,6 +176,18 @@ class Crawler {
 
 		}
 
+		$stmt->close();
+
+	}
+
+	private function recordURL($url) {
+
+		$insert_str = 'INSERT OR IGNORE INTO crawl_history (url, accessed)
+							VALUES (:url, DATETIME(\'NOW\'))';
+
+		$stmt = $this->db->prepare($insert_str);
+		$stmt->bindValue(':url', $url, SQLITE3_TEXT);
+		$result = $stmt->execute();
 		$stmt->close();
 
 	}
